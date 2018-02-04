@@ -61,7 +61,7 @@ function fish_prompt --description 'Write out the prompt'
        # Exit Status Formatting
        set -l prompt_status
        if test $last_status -ne 0
-             set prompt_status " " "$err_color" "[$last_spptatus]" "$normal_color"
+             set prompt_status " " "$err_color" "[$last_status]" "$normal_color"
        end
 
        # Print Prompt
