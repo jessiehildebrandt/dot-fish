@@ -22,15 +22,21 @@ function fish_prompt --description 'Write out the prompt'
 
     # Color Definitions
     set -l normal_color (set_color normal)
+	set -l ssh_color (set_color brwhite)
 	set -l bat_color (set_color bryellow)
     set -l usr_color (set_color brgreen)
     set -l dir_color (set_color brblue)
-
     set -l vcs_color (set_color brblack)
     set -l err_color (set_color red)
 
 	# Battery File Location
 	set -l bat_file /sys/class/power_supply/BAT0/capacity
+
+	# SSH Status Formatting
+	set -l ssh_status ""
+	if test -n "$SSH_CONNECTION"
+		set ssh_status "$ssh_color" "[ssh]" "$nromal_color" " "
+	end
 
 	# Battery Status Formatting
 	set -l bat_status ""
@@ -64,6 +70,6 @@ function fish_prompt --description 'Write out the prompt'
     end
 
     # Print Prompt
-    echo -n -s $bat_status $user_host " " $current_dir $vcs_status $prompt_status $suffix " "
+    echo -n -s $ssh_status $bat_status $user_host " " $current_dir $vcs_status $prompt_status $suffix " "
 
 end
