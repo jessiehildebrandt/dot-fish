@@ -13,6 +13,47 @@ set fish_key_bindings fish_default_key_bindings
 
 set VIRTUAL_ENV_DISABLE_PROMPT true
 
+####################
+# Battery Function #
+####################
+
+function battery --description 'Display the current status of the battery'
+
+    #################
+    # Local variables
+
+	set -l battery_file /sys/class/power_supply/BAT0/capacity
+
+    set -l normal (set_color normal)
+    set -l yellow (set_color bryellow)
+    set -l orange (set_color yellow)
+    set -l blue (set_color brblue)
+
+    #####################
+    # ACPI battery status
+
+    if type acpi > /dev/null
+        set -l battery_str (acpi | cut -d "," -f 2- | string trim)
+        set battery_str (string replace -r '([[:digit:]]{1,3}%), (.*)$' "$yellow\$1$normal $orange(\$2)$normal" $battery_str)
+        printf "%s" $blue "Remaining battery:$normal " $battery_str
+        return
+    end
+
+    #########################
+    # Fallback battery status
+
+    if test -f $battery_file
+        printf "%s" $blue "Remaining battery:$normal " $yellow (cat $battery_file) "%$normal"
+        return
+    end
+
+    #####################
+    # Unsupported battery
+
+    printf "%s" $blue "No battery detected.$normal"
+
+end
+
 ##################
 # Title Function #
 ##################
@@ -70,11 +111,9 @@ function fish_prompt --description 'Write out the prompt'
     set -l yellow (set_color ffeb3b bryellow)
     set -l cyan (set_color 62d7ff brcyan)
     set -l magenta (set_color f358dc brmagenta)
-    set -l gray (set_color 5b5b5b brblack)
-    set -l darkgray (set_color 2e2e2e black)
+    set -l gray (set_color 5e5e5e brblack)
+    set -l darkgray (set_color 3b3b3b brblack)
     set -l red (set_color f44336 brred)
-
-	set -l battery_file /sys/class/power_supply/BAT0/capacity
 
     #############
     # SSH Segment
@@ -91,14 +130,6 @@ function fish_prompt --description 'Write out the prompt'
     if test -n "$VIRTUAL_ENV"
         set venv_seg "$gray(" (basename $VIRTUAL_ENV) ")$normal "
     end
-
-    #################
-    # Battery Segment
-
-	set -l battery_seg ""
-	if test -f $battery_file
-		set battery_seg "$yellow" (cat $bat_file) "%$normal "
-	end
 
     #################
     # User@Host Segment
@@ -129,7 +160,7 @@ function fish_prompt --description 'Write out the prompt'
     # Output
 
     printf "\n"
-    printf "%s" $venv_seg $ssh_seg $battery_seg $user_host_seg $pwd_seg $vcs_seg
+    printf "%s" $venv_seg $ssh_seg $user_host_seg $pwd_seg $vcs_seg
     printf "\n%s" $prompt_char
 
 end
