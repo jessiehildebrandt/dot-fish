@@ -164,3 +164,28 @@ function fish_prompt --description 'Write out the prompt'
     printf "\n%s" $prompt_char
 
 end
+
+#########################
+# Right Prompt Function #
+#########################
+
+function fish_right_prompt
+
+    #############################
+    # Enable/disable right prompt
+
+    if not set -q __fish_prompt_show_timestamps
+        return
+    end
+
+    #################
+    # Local variables
+
+    set -l darkgray (set_color 3b3b3b brblack)
+
+    ###########
+    # Timestamp
+
+    printf "%s" $darkgray (date +"[%H:%M:%S]")
+
+end
