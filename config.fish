@@ -6,10 +6,12 @@
 # Setting Variables #
 #####################
 
-set __fish_git_prompt_show_informative_status 1
+set __fish_git_prompt_show_informative_status true
 
-set fish_greeting ""
+set fish_greeting "Hello, commander."
 set fish_key_bindings fish_default_key_bindings
+
+set VIRTUAL_ENV_DISABLE_PROMPT true
 
 ##################
 # Title Function #
@@ -17,7 +19,7 @@ set fish_key_bindings fish_default_key_bindings
 
 function fish_title --description 'Print the title of the window'
 
-    # Trying to set the title inside an Emacs term will break it
+    # Trying to set the title inside of Emacs will break it
     if set -q INSIDE_EMACS
         return
     end
@@ -33,59 +35,101 @@ end
 
 function fish_prompt --description 'Write out the prompt'
 
-    # Get Exit Status
+    ####################
+    # Exit Status
+
+    # Cache the exit status of the last command
     set -l last_status $status
 
-    # Color Definitions
-    set -l normal_color (set_color normal)
-	set -l ssh_color (set_color brwhite)
-	set -l bat_color (set_color bryellow)
-    set -l usr_color (set_color brgreen)
-    set -l dir_color (set_color brblue)
-    set -l vcs_color (set_color brblack)
-    set -l err_color (set_color red)
+    ##################
+    # Global Variables
 
-	# Battery File Location
-	set -l bat_file /sys/class/power_supply/BAT0/capacity
+    # Format host name variable if not yet set
+    if not set -q __fish_prompt_hostname
+        set -g __fish_prompt_hostname (prompt_hostname)
+    end
 
-	# SSH Status Formatting
-	set -l ssh_status ""
+    # Format prompt character variable if not yet set
+    if not set -q __fish_prompt_char
+        switch (id -u)
+            case 0
+                # Root
+                set -g __fish_prompt_char "#"
+            case '*'
+                # Everyone else
+                set -g __fish_prompt_char ">"
+        end
+    end
+
+
+    #################
+    # Local Variables
+
+    set -l normal (set_color normal)
+    set -l white (set_color brwhite)
+    set -l yellow (set_color ffeb3b bryellow)
+    set -l cyan (set_color 62d7ff brcyan)
+    set -l magenta (set_color f358dc brmagenta)
+    set -l gray (set_color 5b5b5b brblack)
+    set -l darkgray (set_color 2e2e2e black)
+    set -l red (set_color f44336 brred)
+
+	set -l battery_file /sys/class/power_supply/BAT0/capacity
+
+    #############
+    # SSH Segment
+
+	set -l ssh_seg ""
 	if test -n "$SSH_CONNECTION"
-		set ssh_status "$ssh_color" "[ssh]" "$nromal_color" " "
+		set ssh_seg "$white[ssh]$normal "
 	end
 
-	# Battery Status Formatting
-	set -l bat_status ""
-	if test -f $bat_file
-		set -l bat_capacity (cat $bat_file)
-		set bat_status "$bat_color" "$bat_capacity" "%" "$normal_color" " "
-	end
+    #############################
+    # Virtual Environment Segment
 
-    # User/Hostname Formatting
-    set -l user_host $usr_color $USER "@" (hostname -s) "$normal_color"
-
-    # Working Directory Formatting
-    set -l home_escaped (echo -n $HOME | sed 's/\//\\\\\//g')
-    set -l pwd (echo -n $PWD | sed "s/^$home_escaped/~/")
-    set -l current_dir "$dir_color" "$pwd" "$normal_color"
-
-    # Suffix Symbol Selection
-    set -l suffix ""
-    switch $USER
-        case root toor; set suffix "#"
-        case "*";  set suffix ">"
+    set -l venv_seg ""
+    if test -n "$VIRTUAL_ENV"
+        set venv_seg "$gray(" (basename $VIRTUAL_ENV) ")$normal "
     end
 
-    # VCS Status Formatting
-    set -l vcs_status "$vcs_color" (__fish_vcs_prompt) "$normal_color"
+    #################
+    # Battery Segment
 
-    # Exit Status Formatting
-    set -l prompt_status
+	set -l battery_seg ""
+	if test -f $battery_file
+		set battery_seg "$yellow" (cat $bat_file) "%$normal "
+	end
+
+    #################
+    # User@Host Segment
+
+    set -l user_host_seg "$cyan$USER$normal at $magenta$__fish_prompt_hostname$normal "
+
+    ###########################
+    # Working Directory (PWD) Segment
+
+    set -g fish_prompt_pwd_dir_length 1
+    set -l pwd_seg "in $gray" (prompt_pwd)
+    set pwd_seg (string replace -ar '(.+/)([^/]*$)' "$darkgray\$1$gray\$2$normal" $pwd_seg)
+
+    ####################
+    # VCS Status Segment
+
+    set -l vcs_seg (__fish_vcs_prompt) ""
+
+    ##################
+    # Prompt Character
+
+    set -l prompt_char "$cyan$__fish_prompt_char$normal "
     if test $last_status -ne 0
-        set prompt_status " " "$err_color" "[$last_status]" "$normal_color"
+        set prompt_char "$red$__fish_prompt_char$normal "
     end
 
-    # Print Prompt
-    echo -n -s $ssh_status $bat_status $user_host " " $current_dir $vcs_status $prompt_status $suffix " "
+    #########
+    # Output
+
+    printf "\n"
+    printf "%s" $venv_seg $ssh_seg $battery_seg $user_host_seg $pwd_seg $vcs_seg
+    printf "\n%s" $prompt_char
 
 end
