@@ -11,6 +11,22 @@ set __fish_git_prompt_show_informative_status 1
 set fish_greeting ""
 set fish_key_bindings fish_default_key_bindings
 
+##################
+# Title Function #
+##################
+
+function fish_title --description 'Print the title of the window'
+
+    # Trying to set the title inside an Emacs term will break it
+    if set -q INSIDE_EMACS
+        return
+    end
+
+    # Set title to the command status + working directory
+    echo (status current-command) (__fish_pwd)
+
+end
+
 ###################
 # Prompt Function #
 ###################
