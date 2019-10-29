@@ -2,6 +2,23 @@
 # Jessie Hildebrandt's Fish Config #
 ####################################
 
+# Contains a pretty multi-line prompt and some useful functions.
+# Compatible with Emacs' ansi-term.
+#
+# Provided functions:
+#  * battery - Displays the battery charge (and discharge time if supported)
+#
+# Prompt features:
+#  * SSH session indicator
+#  * Virtual environment indicator
+#  * Abbreviated + colorized working directory
+#  * VCS status
+#  * Dynamic prompt character (root/user, return status)
+#  * Optional timestamps
+#
+# Configurable variables:
+#  * __fish_prompt_show_timestamps - If set, displays timestamps on the right side of the terminal
+
 #####################
 # Setting Variables #
 #####################
