@@ -14,10 +14,12 @@
 #  * Abbreviated + colorized working directory
 #  * VCS status
 #  * Dynamic prompt character (root/user, return status)
+#  * Dynamic greeting function ()
 #  * Optional timestamps
 #
 # Configurable variables:
 #  * __fish_prompt_show_timestamps - If set, displays timestamps on the right side of the terminal
+#  * __fish_greeting_fortune_cookies - Overrides the default list of fortune cookies to use for greetings
 
 #####################
 # Setting Variables #
@@ -25,10 +27,57 @@
 
 set __fish_git_prompt_show_informative_status true
 
-set fish_greeting "Hello, commander."
 set fish_key_bindings fish_default_key_bindings
 
+set fish_color_command 8787ff
+
 set VIRTUAL_ENV_DISABLE_PROMPT true
+
+#####################
+# Greeting Function #
+#####################
+
+function fish_greeting --description 'Display a greeting when the session begins'
+
+    ##################
+    # Fortune greeting
+
+    if type -q fortune
+
+        # Set up list of desired cookies
+        set -l desired_cookies
+        if not set -q __fish_greeting_fortune_cookies
+            set desired_cookies computers people science education work wisdom
+        else
+            set desired_cookies $__fish_greeting_fortune_cookies
+        end
+
+        # Determine which desired cookies are available
+        set -l found_cookies
+        for cookie in $desired_cookies
+            if fortune -s $cookie > /dev/null ^ /dev/null
+                set -a found_cookies $cookie
+            end
+        end
+
+        # If any desired cookies are found, source a fortune from them
+        if test (count $found_cookies) -gt 0
+            fortune -s $found_cookies
+            return
+        end
+
+        # Otherwise, just print whatever
+        fortune -s
+        return
+
+    end
+
+    #################
+    # Static greeting
+
+    echo "Hello, commander."
+
+end
 
 ####################
 # Battery Function #
@@ -39,35 +88,35 @@ function battery --description 'Display the current status of the battery'
     #################
     # Local variables
 
-	set -l battery_file /sys/class/power_supply/BAT0/capacity
+	set -l battery_files /sys/class/power_supply/BAT*/capacity
 
     set -l normal (set_color normal)
     set -l yellow (set_color bryellow)
-    set -l orange (set_color yellow)
-    set -l blue (set_color brblue)
+    set -l gray (set_color 5e5e5e brblack)
 
     #####################
     # ACPI battery status
 
-    if type acpi > /dev/null
-        set -l battery_str (acpi | cut -d "," -f 2- | string trim)
-        set battery_str (string replace -r '([[:digit:]]{1,3}%), (.*)$' "$yellow\$1$normal $orange(\$2)$normal" $battery_str)
-        printf "%s" $blue "Remaining battery:$normal " $battery_str
+    if type -q acpid
+        set -l battery_str (acpi | grep "Unknown" --invert | head -n 1 | cut -d "," -f 2- | string trim)
+        set battery_str (string replace -r '([[:digit:]]{1,3}%), (.*)$' "$yellow\$1$normal $gray(\$2)$normal" $battery_str)
+        echo "Battery status: $battery_str"
         return
     end
 
     #########################
     # Fallback battery status
 
-    if test -f $battery_file
-        printf "%s" $blue "Remaining battery:$normal " $yellow (cat $battery_file) "%$normal"
+    if test -f $battery_files
+        set -l battery_str "$yellow"(cat $battery_files | head -n 1 | string trim)"%$normal"
+        echo "Battery status: $battery_str"
         return
     end
 
     #####################
     # Unsupported battery
 
-    printf "%s" $blue "No battery detected.$normal"
+    echo "No battery detected."
 
 end
 
@@ -91,7 +140,7 @@ end
 # Prompt Function #
 ###################
 
-function fish_prompt --description 'Write out the prompt'
+function fish_prompt --description 'Display a formatted terminal prompt'
 
     ####################
     # Exit Status
@@ -145,7 +194,7 @@ function fish_prompt --description 'Write out the prompt'
 
     set -l venv_seg ""
     if test -n "$VIRTUAL_ENV"
-        set venv_seg "$gray(" (basename $VIRTUAL_ENV) ")$normal "
+        set venv_seg "$gray("(basename $VIRTUAL_ENV)")$normal "
     end
 
     #################
@@ -157,13 +206,17 @@ function fish_prompt --description 'Write out the prompt'
     # Working Directory (PWD) Segment
 
     set -g fish_prompt_pwd_dir_length 1
-    set -l pwd_seg "in $gray" (prompt_pwd)
-    set pwd_seg (string replace -ar '(.+/)([^/]*$)' "$darkgray\$1$gray\$2$normal" $pwd_seg)
+    set -l pwd_seg (prompt_pwd)
+    if test (string length $pwd_seg) -eq 1
+        set pwd_seg (string replace -ar '^.*$' "in $gray\$0$normal" $pwd_seg)
+    else
+        set pwd_seg (string replace -ar '^(.*[~\/])([^\/]*$)' "in $darkgray\$1$gray\$2$normal" $pwd_seg)
+    end
 
     ####################
     # VCS Status Segment
 
-    set -l vcs_seg (__fish_vcs_prompt) ""
+    set -l vcs_seg (__fish_vcs_prompt)
 
     ##################
     # Prompt Character
@@ -176,9 +229,7 @@ function fish_prompt --description 'Write out the prompt'
     #########
     # Output
 
-    printf "\n"
-    printf "%s" $venv_seg $ssh_seg $user_host_seg $pwd_seg $vcs_seg
-    printf "\n%s" $prompt_char
+    echo -se $venv_seg $ssh_seg $user_host_seg $pwd_seg $vcs_seg "\n" $prompt_char
 
 end
 
@@ -186,7 +237,7 @@ end
 # Right Prompt Function #
 #########################
 
-function fish_right_prompt
+function fish_right_prompt --description "Display a right-aligned terminal prompt"
 
     #############################
     # Enable/disable right prompt
@@ -198,11 +249,13 @@ function fish_right_prompt
     #################
     # Local variables
 
+    set -l normal (set_color normal)
     set -l darkgray (set_color 3b3b3b brblack)
 
     ###########
     # Timestamp
 
-    printf "%s" $darkgray (date +"[%H:%M:%S]")
+    set -l timestamp_str "$darkgray"(date +"[%H:%M:%S]")"$normal"
+    echo -s "$darkgray$timestamp_str"
 
 end
