@@ -14,7 +14,7 @@
 #  * Abbreviated + colorized working directory
 #  * VCS status
 #  * Dynamic prompt character (root/user, return status)
-#  * Dynamic greeting function ()
+#  * Dynamic greeting function
 #  * Optional timestamps
 #
 # Configurable variables:
@@ -97,7 +97,7 @@ function battery --description 'Display the current status of the battery'
     #####################
     # ACPI battery status
 
-    if type -q acpid
+    if type -q acpi
         set -l battery_str (acpi | grep "Unknown" --invert | head -n 1 | cut -d "," -f 2- | string trim)
         set battery_str (string replace -r '([[:digit:]]{1,3}%), (.*)$' "$yellow\$1$normal $gray(\$2)$normal" $battery_str)
         echo "Battery status: $battery_str"
@@ -108,7 +108,8 @@ function battery --description 'Display the current status of the battery'
     # Fallback battery status
 
     if test -f $battery_files
-        set -l battery_str "$yellow"(cat $battery_files | head -n 1 | string trim)"%$normal"
+        set -l battery_str (cat $battery_files | head -n 1 | string trim)
+        set battery_str (string replace -r '([[:digit:]]{1,3})' "$yellow\$1%$normal" $battery_str)
         echo "Battery status: $battery_str"
         return
     end
@@ -131,8 +132,18 @@ function fish_title --description 'Print the title of the window'
         return
     end
 
-    # Set title to the command status + working directory
-    echo (status current-command) (__fish_pwd)
+    # Set window title to the current command + working directory
+    if test (echo $FISH_VERSION | cut -d "." -f 1) -ge 3
+
+        # Fish 3.X.X and above use "status current-command"
+        echo (status current-command) (__fish_pwd)
+
+    else
+
+        # Older versions of fish use the "$_" variable
+        echo $_ (__fish_pwd)
+
+    end
 
 end
 
