@@ -229,7 +229,7 @@ function fish_prompt --description 'Display a formatted terminal prompt'
     #########
     # Output
 
-    echo -se $venv_seg $ssh_seg $user_host_seg $pwd_seg $vcs_seg "\n" $prompt_char
+    echo -se "\n" $venv_seg $ssh_seg $user_host_seg $pwd_seg $vcs_seg "\n" $prompt_char
 
 end
 
