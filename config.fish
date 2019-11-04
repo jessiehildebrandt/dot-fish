@@ -14,7 +14,7 @@
 #  * Abbreviated + colorized working directory
 #  * VCS status
 #  * Dynamic prompt character (root/user, return status)
-#  * Dynamic greeting function ()
+#  * Dynamic greeting function
 #  * Optional timestamps
 #
 # Configurable variables:
@@ -131,8 +131,18 @@ function fish_title --description 'Print the title of the window'
         return
     end
 
-    # Set title to the command status + working directory
-    echo (status current-command) (__fish_pwd)
+    # Set window title to the current command + working directory
+    if test (echo $FISH_VERSION | cut -d "." -f 1) -ge 3
+    
+        # Fish 3.X.X and above use "status current-command"
+        echo (status current-command) (__fish_pwd)
+        
+    else
+    
+        # Older versions of fish use the "$_" variable
+        echo $_ (__fish_pwd)
+        
+    end
 
 end
 
