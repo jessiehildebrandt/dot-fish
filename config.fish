@@ -99,7 +99,8 @@ function battery --description 'Display the current status of the battery'
 
     if type -q acpi
         set -l battery_str (acpi | grep "Unknown" --invert | head -n 1 | cut -d "," -f 2- | string trim)
-        set battery_str (string replace -r '([[:digit:]]{1,3}%), (.*)$' "$yellow\$1$normal $gray(\$2)$normal" $battery_str)
+        set battery_str (string replace -r '([[:digit:]]{1,3}%),? ?(.*)$' "$yellow\$1$normal $gray(\$2)$normal" $battery_str)
+        set battery_str (string replace -r '\(\)' "(Fully charged)" $battery_str)
         echo "Battery status: $battery_str"
         return
     end
