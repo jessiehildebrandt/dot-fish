@@ -198,7 +198,7 @@ function fish_prompt --description 'Display a formatted terminal prompt'
 
 	set -l ssh_seg ""
 	if test -n "$SSH_CONNECTION"
-		set ssh_seg "$white[ssh]$normal "
+		set ssh_seg "$white" "[ssh]" "$normal "
 	end
 
     #############################
