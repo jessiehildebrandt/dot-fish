@@ -16,10 +16,12 @@
 #  * Dynamic prompt character (root/user, return status)
 #  * Dynamic greeting function
 #  * Optional timestamps
+#  * Automatic aliasing of 'rm' -> 'rm -i' for root sessions
 #
 # Configurable variables:
 #  * __fish_prompt_show_timestamps - If set, displays timestamps on the right side of the terminal
 #  * __fish_greeting_fortune_cookies - Overrides the default list of fortune cookies to use for greetings
+#  * __fish_disable_interactive_root_rm - If set, disables automatic aliasing of 'rm' to 'rm -i' when signed in as root
 
 #####################
 # Setting Variables #
@@ -32,6 +34,21 @@ set fish_key_bindings fish_default_key_bindings
 set fish_color_command 8787ff
 
 set VIRTUAL_ENV_DISABLE_PROMPT true
+
+###########
+# Aliases #
+###########
+
+# Conditionally set 'rm' -> 'rm -i' alias for the root user only
+switch (id -u)
+    case 0
+        # Root
+        if not set -q __fish_disable_interactive_root_rm
+            alias rm 'rm -i'
+        end
+    case '*'
+        # Everyone else
+end
 
 #####################
 # Greeting Function #
